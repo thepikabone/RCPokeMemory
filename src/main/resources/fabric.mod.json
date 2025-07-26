@@ -3,17 +3,16 @@
 	"id": "rcpokememory",
 	"version": "${version}",
 	"name": "RCPokeMemory",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"description": "PokeMemory implemented for Fabric.",
 	"authors": [
-		"Me!"
+		"thepikabone"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"sources": "https://github.com/thepikabone/RCPokeMemory"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/rcpokememory/icon.png",
-	"environment": "*",
+	"environment": "server",
 	"entrypoints": {
 		"main": [
 			"com.thepikabone.rcpokememory.RCPokeMemory"

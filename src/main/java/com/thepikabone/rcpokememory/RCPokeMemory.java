@@ -1,6 +1,9 @@
 package com.thepikabone.rcpokememory;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+
+import com.thepikabone.rcpokememory.command.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,9 @@ public class RCPokeMemory implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 
-		LOGGER.info("Hello Fabric world!");
+		CommandRegistrationCallback.EVENT.register(PokeMemoryMainCommand::register);
+		CommandRegistrationCallback.EVENT.register(PokeMemoryClearCommand::register);
+
+		LOGGER.info("Registered RCPokeMemory");
 	}
 }
