@@ -7,14 +7,19 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import org.spongepowered.configurate.objectmapping.ConfigSerializable;
+import org.spongepowered.configurate.objectmapping.meta.Setting;
 
-
+@ConfigSerializable
 public class PlayerMemory {
     private static final int NUMBER_OF_SPECIES = 10;
-
+    @Setting
     public UUID uuid;
+    @Setting
     public Memory memory;
+    @Setting
     public Instant startedAt;
+    @Setting
     public Instant lastCompletedAt;
 
     public PlayerMemory(UUID uuid) {
@@ -73,6 +78,7 @@ public class PlayerMemory {
 
         this.memory = new Memory(deck);
         this.startedAt = Instant.now();
+        this.lastCompletedAt = null;
     }
 
 //    private void addCardRandomlyInDeck(Map<Integer, String> cards, Species species) {
@@ -105,13 +111,19 @@ public class PlayerMemory {
         return this.startedAt;
     }
 
-
+    @ConfigSerializable
     public static class Memory {
+        @Setting
         public Map<Integer, String> deck = new HashMap<>();
+        @Setting
         public List<Integer> answered = new ArrayList<>();
+        @Setting
         public List<Integer> activeGuess = new ArrayList<>();
+        @Setting
         public boolean completed = false;
+        @Setting
         public boolean receivedReward = false;
+        @Setting
         public int lives;
 
 
@@ -122,12 +134,12 @@ public class PlayerMemory {
             return activeGuess;
         }
         public Memory(Map<Integer, String> deck) {
-            this.lives = 15;
+            this.lives = RCPokeMemory.getSettings().totalLivesPerGame;
             this.deck = deck;
         }
 
         public Memory() {
-            this.lives = 15;
+            this.lives = RCPokeMemory.getSettings().totalLivesPerGame;
         }
 
         public boolean answer(int pick) {

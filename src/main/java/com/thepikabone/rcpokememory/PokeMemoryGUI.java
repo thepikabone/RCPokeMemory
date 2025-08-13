@@ -1,6 +1,7 @@
 package com.thepikabone.rcpokememory;
 
 import com.google.common.collect.Lists;
+import com.thepikabone.rcpokememory.storage.PlayersConfig;
 import eu.pb4.sgui.api.elements.GuiElement;
 import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.elements.GuiElementBuilderInterface;
@@ -16,17 +17,25 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
+import org.w3c.dom.html.HTMLElement;
+import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.network.ServerPlayerEntity;
 
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.lang.String;
+import java.util.stream.Collectors;
 
 
 public class PokeMemoryGUI extends SimpleGui {
 
     private int ticker = 0;
     private boolean correct = true;
-    private int countdown = 0;
     private final PlayerMemory player_memory;
     public int temp_card = -1;
     public int prev_card = -1;
@@ -34,7 +43,7 @@ public class PokeMemoryGUI extends SimpleGui {
     public <T extends PokeMemoryGUI> PokeMemoryGUI(ServerPlayerEntity player, PlayerMemory player_memory) {
 
         super(ScreenHandlerType.GENERIC_9X5, player, false);
-        this.setTitle(Text.literal("PokeMemory >> 15 Lives"));
+        this.setTitle(Text.literal(RCPokeMemory.getLang().gui.lives.replace("%lives%", String.valueOf(player_memory.memory.lives))));
         this.player_memory = player_memory;
         this.player = player;
 
@@ -46,19 +55,72 @@ public class PokeMemoryGUI extends SimpleGui {
     }
 
     private void flip(int card) throws FileNotFoundException, UnsupportedEncodingException {
-        if (player_memory.memory.canGuess() && correct){
-            if (player_memory.memory.activeGuess.isEmpty()) {
-                player_memory.memory.answer(card);
-                this.updateDisplay();
-            } else if (player_memory.memory.canGuess()) {
-                this.prev_card = player_memory.memory.activeGuess().getFirst();
-                boolean temp = player_memory.memory.answer(card);
-                if(!temp)
-                    this.temp_card = card;
-                this.setTitle(Text.literal(String.format("PokeMemory >> %d Lives", player_memory.memory.lives)));
-                this.updateDisplay();
-                correct = temp;
+        if (player_memory.memory.canGuess()) {
+            if (player_memory.memory.canGuess() && correct) {
+                if (player_memory.memory.activeGuess.isEmpty()) {
+                    player_memory.memory.answer(card);
+                    this.updateDisplay();
+                } else if (player_memory.memory.canGuess()) {
+                    this.prev_card = player_memory.memory.activeGuess().getFirst();
+                    boolean temp = player_memory.memory.answer(card);
+                    if (!temp)
+                        this.temp_card = card;
+                    this.updateDisplay();
+                    correct = temp;
+                }
             }
+            if (player_memory.memory.hasAnsweredCorrectly()) {
+                this.player.sendMessage(
+                        Text.literal(RCPokeMemory.getLang().gui.feedback.successfullyCompleted));
+                MinecraftServer server = player.getServer();
+                if (server == null) return;
+
+                ServerCommandSource src = server.getCommandSource().withLevel(4);
+
+                String name = player.getGameProfile().getName();
+
+                for (String raw : RCPokeMemory.getSettings().rewardCommands) {
+                    String cmd = raw.replace("%player%", name);
+                    server.getCommandManager().executeWithPrefix(src, cmd);
+                }
+                this.player_memory.lastCompletedAt = Instant.now();
+                this.updateDisplay();
+
+            } else if (!player_memory.memory.canGuess()) {
+                this.player.sendMessage(
+                        Text.literal(RCPokeMemory.getLang().gui.feedback.failCompleted));
+                this.player_memory.lastCompletedAt = Instant.now();
+                this.updateDisplay();
+            }
+
+            ((PlayersConfig) RCPokeMemory.getPlayers().get()).update(this.player_memory);
+            RCPokeMemory.getPlayers().save();
+
+        }
+    }
+
+    public void apply_cooldown() {
+        if (this.player_memory.lastCompletedAt != null &&
+                Instant.now().isAfter(this.player_memory.lastCompletedAt.plus(RCPokeMemory.getSettings().cooldownAfterCompleted))) {
+            this.player_memory.reset();
+            this.player_memory.init();
+            ((PlayersConfig) RCPokeMemory.getPlayers().get()).update(this.player_memory);
+            RCPokeMemory.getPlayers().save();
+        }
+    }
+
+    public DisplayElement generate_clock_or_star() {
+        if (this.player_memory.lastCompletedAt == null) {
+            return DisplayElement.star();
+        } else {
+            Instant target = this.player_memory.lastCompletedAt.plus(RCPokeMemory.getSettings().cooldownAfterCompleted);
+            long secondsLeft = Duration.between(Instant.now(), target).getSeconds();
+
+            return DisplayElement.of(
+                    new GuiElementBuilder(Items.CLOCK)
+                            .setName(Text.literal("Cooldown: " + secondsLeft + "s"))
+                            .hideDefaultTooltip()
+            );
         }
     }
 
@@ -77,17 +139,22 @@ public class PokeMemoryGUI extends SimpleGui {
                     throw new RuntimeException(e);
                 }
             }
-        }
-
-        if (player_memory.memory.completed) {
-
-            this.player.sendMessage(
-                        Text.literal("PokeMemory Cleared"),
-                        true);
+        } else if (this.player_memory.lastCompletedAt != null) {
+            ticker++;
+            if (ticker >= 20) {
+                ticker = 0;
+                try {
+                    this.apply_cooldown();
+                    this.updateDisplay();
+                } catch (FileNotFoundException | UnsupportedEncodingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 
     public void updateDisplay() throws FileNotFoundException, UnsupportedEncodingException {
+        this.setTitle(Text.literal(RCPokeMemory.getLang().gui.lives.replace("%lives%", String.valueOf(player_memory.memory.lives))));
         for (int i = 0; i < 45; i++) {
             var element = this.getElement(i);
 
@@ -100,10 +167,12 @@ public class PokeMemoryGUI extends SimpleGui {
     protected DisplayElement getElement(int id) throws FileNotFoundException, UnsupportedEncodingException {
         if ((id >= 0 && id <= 9) || id == 17) {
             return DisplayElement.red();
-        } else if (id == 18 || id == 26 || id == 22) {
+        } else if (id == 18 || id == 26) {
             return DisplayElement.black();
         } else if ((id >= 35 && id <= 44) || id == 27) {
             return DisplayElement.white();
+        } else if (id == 22) {
+            return this.generate_clock_or_star();
         } else {
             return DisplayElement.cards(this, id);
         }
@@ -132,6 +201,16 @@ public class PokeMemoryGUI extends SimpleGui {
                         .hideDefaultTooltip()
         );
 
+        private static final List<String> arr = RCPokeMemory.getLang().gui.instruction_item;;
+        private static final DisplayElement STAR = DisplayElement.of(
+                new GuiElementBuilder(Items.NETHER_STAR)
+                        .setName(Text.literal(RCPokeMemory.getLang().gui.welcome))
+                        .setLore(arr.stream()
+                                .map(Text::literal)
+                                .collect(Collectors.toList()))
+                        .hideDefaultTooltip()
+        );
+
         public static DisplayElement of(GuiElementInterface element) {
             return new DisplayElement(element, null);
         }
@@ -150,6 +229,10 @@ public class PokeMemoryGUI extends SimpleGui {
 
         public static DisplayElement white() {
             return WHITE;
+        }
+
+        public static DisplayElement star() {
+            return STAR;
         }
 
         public static DisplayElement empty() {
