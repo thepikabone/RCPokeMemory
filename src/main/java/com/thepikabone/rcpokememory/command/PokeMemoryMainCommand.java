@@ -24,7 +24,7 @@ import java.util.UUID;
 public class PokeMemoryMainCommand {
     public static void register(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess commandRegistryAccess, CommandManager.RegistrationEnvironment registrationEnvironment){
         dispatcher.register(CommandManager.literal("memory")
-//                .requires(Permissions.require("rcpokememory.memory", 0))
+                .requires(source -> source.hasPermissionLevel(0))
                 .executes(PokeMemoryMainCommand::run));
     }
 

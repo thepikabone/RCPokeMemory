@@ -26,7 +26,7 @@ public class PokeMemoryClearCommand {
                 .then(CommandManager.literal("clear")
                     .then(CommandManager.argument("player", StringArgumentType.string())
                         .suggests(new PokeMemoryPlayerSuggestionProvider())
-//                            .requires(Permissions.require("rcpokememory.clear", 4))
+                            .requires(source -> source.hasPermissionLevel(4))
                         .executes(PokeMemoryClearCommand::run))));
 
     }

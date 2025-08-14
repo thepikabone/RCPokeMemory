@@ -37,6 +37,8 @@ public class LangConfig {
             public String failCompleted = "You were unable to solve the RCPokéMemory.";
             @Setting
             public String successfullyCompleted = "Congratulations! You successfully solved the RCPokéMemory!";
+            @Setting
+            public String partialCompleted = "Congratulations! You successfully matched one pair of pokemon.";
         }
     }
 }

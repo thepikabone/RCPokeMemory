@@ -62,7 +62,7 @@ public class PokeMemoryGUI extends SimpleGui {
 
         try{
             this.updateDisplay();
-        } catch (FileNotFoundException | UnsupportedEncodingException e){
+        } catch (Exception e){
             RCPokeMemory.LOGGER.info(e.toString());
         }
     }
@@ -76,8 +76,24 @@ public class PokeMemoryGUI extends SimpleGui {
                 } else if (player_memory.memory.canGuess()) {
                     this.prev_card = player_memory.memory.activeGuess().getFirst();
                     boolean temp = player_memory.memory.answer(card);
-                    if (!temp)
+                    if (!temp) {
                         this.temp_card = card;
+                    } else {
+                        this.player.sendMessage(
+                                Text.literal(RCPokeMemory.getLang().gui.feedback.partialCompleted));
+
+                        MinecraftServer server = player.getServer();
+                        if (server == null) return;
+
+                        ServerCommandSource src = server.getCommandSource().withLevel(4);
+
+                        String name = player.getGameProfile().getName();
+
+                        for (String raw : RCPokeMemory.getSettings().partialRewardCommands) {
+                            String cmd = raw.replace("%player%", name);
+                            server.getCommandManager().executeWithPrefix(src, cmd);
+                        }
+                    }
                     this.updateDisplay();
                     correct = temp;
                 }
@@ -178,7 +194,7 @@ public class PokeMemoryGUI extends SimpleGui {
 
     }
 
-    public ItemStack givePokemonModel() {
+    public Pokemon givePokemonModel(int index) {
         // Create the base item
 
 //        NbtCompound pokemonNbt = new NbtCompound();
@@ -189,32 +205,22 @@ public class PokeMemoryGUI extends SimpleGui {
 //        DynamicRegistryManager regs = Objects.requireNonNull(this.player.getServer()).getRegistryManager();
 //        Pokemon pokemon = Pokemon.Companion.create(Species.INSTANCE.getByIdentifier(speciesId));
 
-        Pokemon pokemon = Objects.requireNonNull(PokemonSpecies.INSTANCE.getByPokedexNumber(25, "cobblemon"))
-                .create(1);
         // Create the model item with the Pokémon data
 
-//        for (var species : PokemonSpecies.INSTANCE.getImplemented()) {
-//        }
-        return PokemonItem.from(pokemon);
+        return Objects.requireNonNull(PokemonSpecies.INSTANCE.getByPokedexNumber(index, "cobblemon"))
+                .create(1);
     }
 
-    public DisplayElement pika() {
-            return DisplayElement.of(
-                    new GuiElementBuilder(this.givePokemonModel())
-                            .setName(Text.literal("PIKAS"))
-                            .hideDefaultTooltip());
-    }
+//    public DisplayElement pika() {
+//            return DisplayElement.of(
+//                    new GuiElementBuilder(this.givePokemonModel())
+//                            .setName(Text.literal("PIKAS"))
+//                            .hideDefaultTooltip());
+//    }
 
     protected DisplayElement getElement(int id) throws FileNotFoundException, UnsupportedEncodingException {
         if ((id >= 0 && id <= 9) || id == 17) {
-            try {
-                DisplayElement a = this.pika();
-                return a;
-            } catch (Exception e)  {
-                RCPokeMemory.LOGGER.info(e.toString());
-                return DisplayElement.red();
-            }
-
+            return DisplayElement.red();
         } else if (id == 18 || id == 26) {
             return DisplayElement.black();
         } else if ((id >= 35 && id <= 44) || id == 27) {
@@ -307,14 +313,15 @@ public class PokeMemoryGUI extends SimpleGui {
             int card_flip = getDeckSlots().indexOf(card);
 
             if ((gui.player_memory.memory.answered().contains(card_flip) || gui.player_memory.memory.activeGuess().contains(card_flip) || gui.temp_card == card_flip || gui.prev_card == card_flip)) {// "namespace:path"
-                Item item = Registries.ITEM.get(Identifier.of(gui.player_memory.memory.deck().get(card_flip)));
+                Pokemon p = gui.givePokemonModel(
+                        gui.player_memory.memory.deck().get(card_flip));
                 return DisplayElement.of(
-                        new GuiElementBuilder(item)
-                                .setName(Text.translatable(item.getTranslationKey()))
+                        new GuiElementBuilder(PokemonItem.from(p))
+                                .setName(p.getDisplayName()) // already a Text object
                                 .hideDefaultTooltip());
             } else {
                 return DisplayElement.of(
-                        new GuiElementBuilder(Items.GOLD_BLOCK)
+                        new GuiElementBuilder(CobblemonItems.POKE_BALL)
                                 .setName(Text.literal("???"))
                                 .hideDefaultTooltip()
                                 .setCallback((index, type1, action) -> {

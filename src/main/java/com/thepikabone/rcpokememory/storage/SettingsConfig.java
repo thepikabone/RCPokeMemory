@@ -14,6 +14,11 @@ public class SettingsConfig {
             this.add("give %player% minecraft:diamond 1");
         }
     };
+    public List<String> partialRewardCommands = new ArrayList<String>() {
+        {
+            this.add("give %player% minecraft:gold_ingot 1");
+        }
+    };
     @Setting
     public int totalLivesPerGame = 15;
     @Setting

@@ -7,6 +7,9 @@ import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import com.cobblemon.mod.common.pokemon.Species;
 import org.spongepowered.configurate.objectmapping.ConfigSerializable;
 import org.spongepowered.configurate.objectmapping.meta.Setting;
 
@@ -34,44 +37,35 @@ public class PlayerMemory {
     }
 
     public void init() {
-//        Map<Integer, String> deck = new HashMap<>();
-//
-//        for(int i = 0; i < 10; ++i) {
-//            Species species = null;
-//
-//            while(species == null || species.getDex() == 0) {
-//                species = PixelmonSpecies.getRandomSpecies();
-//                if (deck.containsValue(species.getName()) || blacklisted.contains(species.getName().toLowerCase())) {
-//                    species = null;
-//                }
-//            }
-//
-//            this.addCardRandomlyInDeck(deck, species);
-//            this.addCardRandomlyInDeck(deck, species);
-//        }
 
-        List<String> BLOCK_IDS = List.of(
-                "minecraft:magma_block",
-                "minecraft:grass_block",
-                "minecraft:oak_log",
-                "minecraft:oak_leaves",   // pick a specific leaf type
-                "minecraft:end_stone",
-                "minecraft:granite",
-                "minecraft:oak_planks",   // choose your wood type
-                "minecraft:glass",
-                "minecraft:diamond_block",
-                "minecraft:cobblestone"
-        );
+        List<Species> available = PokemonSpecies.INSTANCE.getImplemented();
 
-        List<String> bag = new ArrayList<>(20);
-        for (String s : BLOCK_IDS) {
-            bag.add(s);
-            bag.add(s);
+        Collections.shuffle(available);
+
+        List<Integer> bag = new ArrayList<>(20);
+        for (int i = 0; i < 10; i++) {
+            Species s = available.get(i);
+            bag.add(s.getNationalPokedexNumber());
+            bag.add(s.getNationalPokedexNumber());
         }
+//    Foo foo = available.get(random.nextInt(available.size()));
+//
+//        List<String> BLOCK_IDS = List.of(
+//                "minecraft:magma_block",
+//                "minecraft:grass_block",
+//                "minecraft:oak_log",
+//                "minecraft:oak_leaves",   // pick a specific leaf type
+//                "minecraft:end_stone",
+//                "minecraft:granite",
+//                "minecraft:oak_planks",   // choose your wood type
+//                "minecraft:glass",
+//                "minecraft:diamond_block",
+//                "minecraft:cobblestone"
+//        );
 
         Collections.shuffle(bag, new Random());
 
-        Map<Integer, String> deck = new HashMap<>();
+        Map<Integer, Integer> deck = new HashMap<>();
         for (int i = 0; i < bag.size(); i++) {
             deck.put(i, bag.get(i));
         }
@@ -114,7 +108,7 @@ public class PlayerMemory {
     @ConfigSerializable
     public static class Memory {
         @Setting
-        public Map<Integer, String> deck = new HashMap<>();
+        public Map<Integer, Integer> deck = new HashMap<>();
         @Setting
         public List<Integer> answered = new ArrayList<>();
         @Setting
@@ -133,7 +127,7 @@ public class PlayerMemory {
         public List<Integer> activeGuess() {
             return activeGuess;
         }
-        public Memory(Map<Integer, String> deck) {
+        public Memory(Map<Integer, Integer> deck) {
             this.lives = RCPokeMemory.getSettings().totalLivesPerGame;
             this.deck = deck;
         }
@@ -145,9 +139,9 @@ public class PlayerMemory {
         public boolean answer(int pick) {
             this.activeGuess.add(pick);
             if (this.activeGuess.size() > 1) {
-                String active = (String)this.deck.get(this.activeGuess.getFirst());
-                String picked = (String)this.deck.get(pick);
-                if (active.equalsIgnoreCase(picked)) {
+                Integer active = (Integer) this.deck.get(this.activeGuess.getFirst());
+                Integer picked = (Integer) this.deck.get(pick);
+                if (active.equals(picked)) {
                     this.answered.add((Integer)this.activeGuess.getFirst());
                     this.answered.add(pick);
                     this.activeGuess = new ArrayList<>();
@@ -196,10 +190,8 @@ public class PlayerMemory {
             return this.completed;
         }
 
-        public Map<Integer, String> deck() {
+        public Map<Integer, Integer> deck() {
             return deck;
         }
-
-
     }
 }
