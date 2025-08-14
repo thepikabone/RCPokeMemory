@@ -1,5 +1,6 @@
 package com.thepikabone.rcpokememory;
 
+import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.common.collect.Lists;
 import com.thepikabone.rcpokememory.storage.PlayersConfig;
 import eu.pb4.sgui.api.elements.GuiElement;
@@ -7,9 +8,13 @@ import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.elements.GuiElementBuilderInterface;
 import eu.pb4.sgui.api.elements.GuiElementInterface;
 import eu.pb4.sgui.api.gui.SimpleGui;
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Identifier;
 import net.minecraft.item.Items;
+import net.minecraft.registry.DynamicRegistryManager;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
@@ -21,7 +26,9 @@ import org.w3c.dom.html.HTMLElement;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-
+import com.cobblemon.mod.common.CobblemonItems;
+import com.cobblemon.mod.common.item.PokemonItem;
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.time.Duration;
@@ -29,7 +36,13 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.lang.String;
+import java.util.Objects;
 import java.util.stream.Collectors;
+
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.item.ItemStack;
 
 
 public class PokeMemoryGUI extends SimpleGui {
@@ -162,11 +175,44 @@ public class PokeMemoryGUI extends SimpleGui {
                 this.setSlot(i, element.element());
             }
         }
+
+    }
+
+    public ItemStack givePokemonModel() {
+        // Create the base item
+
+//        NbtCompound pokemonNbt = new NbtCompound();
+//        pokemonNbt.putString("species", "cobblemon:pikachu");
+//        pokemonNbt.put("aspects", new NbtCompound()); // empty aspects
+//
+//        // Load the Pokémon object from NBT
+//        DynamicRegistryManager regs = Objects.requireNonNull(this.player.getServer()).getRegistryManager();
+//        Pokemon pokemon = Pokemon.Companion.create(Species.INSTANCE.getByIdentifier(speciesId));
+
+        Pokemon pokemon = Objects.requireNonNull(PokemonSpecies.INSTANCE.getByPokedexNumber(25, "cobblemon"))
+                .create(1);
+        // Create the model item with the Pokémon data
+
+        return PokemonItem.from(pokemon);
+    }
+
+    public DisplayElement pika() {
+            return DisplayElement.of(
+                    new GuiElementBuilder(this.givePokemonModel())
+                            .setName(Text.literal("PIKAS"))
+                            .hideDefaultTooltip());
     }
 
     protected DisplayElement getElement(int id) throws FileNotFoundException, UnsupportedEncodingException {
         if ((id >= 0 && id <= 9) || id == 17) {
-            return DisplayElement.red();
+            try {
+                DisplayElement a = this.pika();
+                return a;
+            } catch (Exception e)  {
+                RCPokeMemory.LOGGER.info(e.toString());
+                return DisplayElement.red();
+            }
+
         } else if (id == 18 || id == 26) {
             return DisplayElement.black();
         } else if ((id >= 35 && id <= 44) || id == 27) {
@@ -201,6 +247,13 @@ public class PokeMemoryGUI extends SimpleGui {
                         .hideDefaultTooltip()
         );
 
+//        private static final DisplayElement PIKA = DisplayElement.of(
+//                new GuiElementBuilder(givePokemonModel())
+//                        .setName(Text.literal("Pikachu"))
+//                        .hideDefaultTooltip()
+//        );
+
+
         private static final List<String> arr = RCPokeMemory.getLang().gui.instruction_item;;
         private static final DisplayElement STAR = DisplayElement.of(
                 new GuiElementBuilder(Items.NETHER_STAR)
@@ -223,6 +276,10 @@ public class PokeMemoryGUI extends SimpleGui {
             return RED;
         }
 
+//        public static DisplayElement pika() {
+//            return PIKA;
+//        }
+//
         public static DisplayElement black() {
             return BLACK;
         }

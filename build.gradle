@@ -1,6 +1,8 @@
 plugins {
 	id 'fabric-loom' version "${loom_version}"
 	id 'maven-publish'
+	id 'org.jetbrains.kotlin.jvm' version '2.2.0'
+	id "java"
 }
 
 version = project.mod_version
@@ -21,6 +23,10 @@ repositories {
 	maven {
 		url "https://cursemaven.com"
 	}
+	maven {
+		name = "Cobblemon"
+		url = "https://maven.impactdev.net/repository/development/"
+	}
 
 	mavenCentral()
 }
@@ -36,7 +42,12 @@ dependencies {
 
 	include(modImplementation('eu.pb4:sgui:1.6.1+1.21.1'))
 //	include(modImplementation('me.lucko:fabric-permissions-api:0.3.3'))
+	modImplementation("com.cobblemon:fabric:1.6.1+1.21.1")
+
+
 	include(modImplementation('org.spongepowered:configurate-hocon:4.2.0'))
+	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+	implementation "org.jetbrains.kotlin:kotlin-reflect:2.2.0"
 }
 
 processResources {
@@ -57,8 +68,6 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
 }
 
 jar {
@@ -85,4 +94,7 @@ publishing {
 		// The repositories here will be used for publishing your artifact, not for
 		// retrieving dependencies.
 	}
+}
+kotlin {
+	jvmToolchain(21)
 }
