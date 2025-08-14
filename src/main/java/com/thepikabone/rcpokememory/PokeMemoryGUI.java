@@ -193,6 +193,8 @@ public class PokeMemoryGUI extends SimpleGui {
                 .create(1);
         // Create the model item with the Pokémon data
 
+//        for (var species : PokemonSpecies.INSTANCE.getImplemented()) {
+//        }
         return PokemonItem.from(pokemon);
     }
 
