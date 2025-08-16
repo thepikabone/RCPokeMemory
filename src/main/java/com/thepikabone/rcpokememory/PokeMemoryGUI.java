@@ -1,5 +1,8 @@
 package com.thepikabone.rcpokememory;
 
+import com.cobblemon.mod.common.CobblemonItems;
+import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+import com.cobblemon.mod.common.item.PokemonItem;
 import com.cobblemon.mod.common.pokemon.Pokemon;
 import com.google.common.collect.Lists;
 import com.thepikabone.rcpokememory.storage.PlayersConfig;
@@ -8,41 +11,23 @@ import eu.pb4.sgui.api.elements.GuiElementBuilder;
 import eu.pb4.sgui.api.elements.GuiElementBuilderInterface;
 import eu.pb4.sgui.api.elements.GuiElementInterface;
 import eu.pb4.sgui.api.gui.SimpleGui;
-import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
-import net.minecraft.client.render.item.ItemRenderer;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
 import net.minecraft.item.Items;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.registry.Registries;
 import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.slot.Slot;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.html.HTMLElement;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import com.cobblemon.mod.common.CobblemonItems;
-import com.cobblemon.mod.common.item.PokemonItem;
-import com.cobblemon.mod.common.api.pokemon.PokemonSpecies;
+
 import java.io.FileNotFoundException;
 import java.io.UnsupportedEncodingException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.lang.String;
 import java.util.Objects;
 import java.util.stream.Collectors;
-
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.item.ItemStack;
 
 
 public class PokeMemoryGUI extends SimpleGui {
